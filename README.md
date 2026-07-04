@@ -51,6 +51,23 @@ Generate a commit message:
 python -m repo_ai --path C:\path\to\your\repo commit
 ```
 
+## Install As A Command
+
+From the RepoLens AI project directory:
+
+```powershell
+python -m pip install -e .
+```
+
+Then you can run `repo-ai` from any directory:
+
+```powershell
+repo-ai --help
+repo-ai --path "C:\Users\your-name\Projects\your-repo" ask "What are the main features?"
+```
+
+If you update RepoLens AI source code, the editable install will use the latest local files automatically.
+
 ## LLM Configuration
 
 RepoLens AI works without network access by using local retrieval and heuristics. Without a valid API key, `ask` prints a concise source list instead of dumping long code snippets.
