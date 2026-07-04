@@ -13,6 +13,49 @@ The project is intentionally compact enough for a resume project, while still sh
 - Conventional Commit message generation
 - OpenAI-compatible API integration
 
+## Requirements
+
+Required:
+
+- Python 3.10 or later
+- Git 2.x
+- A local code repository to analyze
+
+Optional:
+
+- An OpenAI-compatible API key for generated answers and deeper review
+- PowerShell on Windows, or any shell that can run Python commands
+
+No third-party Python package is required for the minimal version. The CLI uses only the Python standard library.
+
+## Environment Setup
+
+Clone the project and enter the RepoLens AI directory:
+
+```powershell
+git clone https://github.com/shisana1211/RepoLens-AI.git
+cd RepoLens-AI
+```
+
+Check Python and Git:
+
+```powershell
+python --version
+git --version
+```
+
+For the best CLI experience, install RepoLens AI in editable mode:
+
+```powershell
+python -m pip install -e .
+```
+
+After installation, the `repo-ai` command is available from any directory:
+
+```powershell
+repo-ai --help
+```
+
 ## Quick Start
 
 Run from this project directory:
