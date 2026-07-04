@@ -1,0 +1,5 @@
+{
+  "api_key": "your_api_key_here",
+  "model": "deepseek-v4-flash",
+  "base_url": "https://api.deepseek.com/chat/completions"
+}

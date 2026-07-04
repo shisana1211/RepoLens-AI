@@ -1,0 +1,16 @@
+[project]
+name = "repo-ai"
+version = "0.1.0"
+description = "A small AI-powered CLI for repository search, explanation, review, and commit messages."
+readme = "README.md"
+requires-python = ">=3.10"
+authors = [{ name = "Repo AI" }]
+dependencies = []
+
+[project.scripts]
+repo-ai = "repo_ai.cli:main"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
