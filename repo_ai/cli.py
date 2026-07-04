@@ -22,6 +22,7 @@ def build_parser() -> argparse.ArgumentParser:
     ask_parser = subparsers.add_parser("ask", help="Ask a question about the indexed repository.")
     ask_parser.add_argument("question", help="Question to answer from repository context.")
     ask_parser.add_argument("--top-k", type=int, default=5, help="Number of chunks to retrieve.")
+    ask_parser.add_argument("--show-context", action="store_true", help="Print retrieved code snippets when no LLM answer is available.")
 
     explain_parser = subparsers.add_parser("explain", help="Explain a file.")
     explain_parser.add_argument("file", help="File path relative to the repository root.")
@@ -44,7 +45,7 @@ def main(argv: list[str] | None = None) -> int:
         if args.command == "init":
             output = commands.init_repo(root)
         elif args.command == "ask":
-            output = commands.ask(root, args.question, top_k=args.top_k)
+            output = commands.ask(root, args.question, top_k=args.top_k, show_context=args.show_context)
         elif args.command == "explain":
             output = commands.explain(root, args.file)
         elif args.command == "review":
@@ -64,4 +65,3 @@ def main(argv: list[str] | None = None) -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

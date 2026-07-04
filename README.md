@@ -1,13 +1,14 @@
 # RepoLens AI
 
-RepoLens AI 是一款面向代码仓库的 AI CLI 智能分析工具，支持对本地项目进行源码索引、RAG 问答、文件解释、Git Diff 智能审查和 Commit Message 生成。项目通过关键词检索、中文查询扩展与项目概览 fallback 构建轻量级代码检索增强流程，并支持 OpenAI-compatible API 配置，使开发者能够在命令行中快速理解项目结构、定位核心模块、分析代码改动风险。
+RepoLens AI is an AI-powered CLI for understanding local code repositories. It supports repository indexing, RAG-style Q&A, file explanation, Git Diff review, and Conventional Commit message generation.
 
-RepoLens AI is intentionally compact enough for a resume project, while still showing the core ideas behind modern AI developer tools:
+The project is intentionally compact enough for a resume project, while still showing the core ideas behind modern AI developer tools:
 
 - local repository indexing
 - retrieval-augmented generation over source code
 - cited answers with file and line ranges
 - Chinese query expansion and project overview fallback
+- concise local retrieval output when no API key is configured
 - AI-assisted code review over `git diff`
 - Conventional Commit message generation
 - OpenAI-compatible API integration
@@ -29,7 +30,7 @@ python -m repo_ai --path C:\path\to\your\repo init
 Ask a question:
 
 ```bash
-python -m repo_ai --path C:\path\to\your\repo ask "How does authentication work?"
+python -m repo_ai --path C:\path\to\your\repo ask "What are the main features?"
 ```
 
 Explain a file:
@@ -50,9 +51,11 @@ Generate a commit message:
 python -m repo_ai --path C:\path\to\your\repo commit
 ```
 
-## Optional LLM Configuration
+## LLM Configuration
 
-RepoLens AI works without network access by using local retrieval and heuristics. To enable generated answers and deeper reviews, configure an OpenAI-compatible API.
+RepoLens AI works without network access by using local retrieval and heuristics. Without a valid API key, `ask` prints a concise source list instead of dumping long code snippets.
+
+To enable generated answers and deeper reviews, configure an OpenAI-compatible API.
 
 Recommended project-level setup:
 
@@ -80,9 +83,7 @@ set REPO_AI_MODEL=deepseek-v4-flash
 set REPO_AI_BASE_URL=https://api.deepseek.com/chat/completions
 ```
 
-`OPENAI_API_KEY` is also supported.
-
-For other OpenAI-compatible providers, set `base_url` or `REPO_AI_BASE_URL` to the provider's chat completions endpoint.
+`OPENAI_API_KEY` is also supported. For other OpenAI-compatible providers, set `base_url` or `REPO_AI_BASE_URL` to the provider's chat completions endpoint.
 
 ## Commands
 
@@ -94,10 +95,16 @@ repo-ai review [--staged]
 repo-ai commit [--staged]
 ```
 
-`ask` also supports increasing the number of retrieved chunks:
+`ask` supports increasing the number of retrieved chunks:
 
 ```bash
 python -m repo_ai --path C:\path\to\your\repo ask --top-k 15 "What are the project highlights?"
+```
+
+When no API key is configured, use `--show-context` to inspect the retrieved snippets:
+
+```bash
+python -m repo_ai --path C:\path\to\your\repo ask --show-context "How does authentication work?"
 ```
 
 ## How It Works
@@ -111,20 +118,19 @@ python -m repo_ai --path C:\path\to\your\repo ask --top-k 15 "What are the proje
 `repo-ai ask` expands common Chinese project questions into code-oriented keywords, retrieves relevant code chunks with a small BM25-style scorer, and falls back to project overview files when direct retrieval is empty. It then either:
 
 - sends the cited context to the configured model, or
-- prints the best local retrieval results when no API key is configured.
+- prints a concise source list when no API key is configured.
 
-The overview fallback prioritizes files such as README, build files, application configuration, controllers, services, API clients, and module-level code. This helps broad questions like "这个项目的主要功能是什么？" get useful context even when the exact words do not appear in source code.
+The overview fallback prioritizes files such as README, build files, application configuration, controllers, services, API clients, and module-level code. This helps broad questions like `这个项目的主要功能是什么？` get useful context even when the exact words do not appear in source code.
 
 `repo-ai review` and `repo-ai commit` read `git diff`. With an API key, they use the model. Without one, they fall back to simple local heuristics.
 
 ## Resume Description
 
-> Built RepoLens AI, a Python CLI that indexes local code repositories and provides RAG-based code Q&A, file explanation, Git diff review, and Conventional Commit generation. Designed a lightweight hybrid retrieval pipeline with Chinese query expansion, project overview fallback, line-level citations, project-level LLM configuration, and optional OpenAI-compatible model integration.
+> Built RepoLens AI, a Python CLI that indexes local code repositories and provides RAG-based code Q&A, file explanation, Git diff review, and Conventional Commit generation. Designed a lightweight hybrid retrieval pipeline with Chinese query expansion, project overview fallback, line-level citations, project-level LLM configuration, concise local retrieval output, and optional OpenAI-compatible model integration.
 
 ## Future Extensions
 
 - add MCP server mode with `repo-ai mcp serve`
-- add `ask --show-context` for transparent RAG debugging
 - add file/class-name exact recall
 - add tree-sitter symbol extraction
 - add vector embeddings with Chroma, LanceDB, or SQLite-vec

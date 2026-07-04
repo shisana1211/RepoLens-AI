@@ -13,6 +13,42 @@ def format_snippet(chunk: dict, max_chars: int = 1200) -> str:
     return f"{chunk['path']}:{chunk['start_line']}-{chunk['end_line']}\n{text}"
 
 
+def format_source_list(hits: list[dict], limit: int = 10) -> str:
+    lines = []
+    seen: set[str] = set()
+    for hit in hits:
+        source = f"{hit['path']}:{hit['start_line']}-{hit['end_line']}"
+        if source in seen:
+            continue
+        seen.add(source)
+        score = hit.get("score")
+        suffix = f" score={score}" if isinstance(score, (int, float)) else ""
+        lines.append(f"- {source}{suffix}")
+        if len(lines) >= limit:
+            break
+    return "\n".join(lines)
+
+
+def local_answer_summary(hits: list[dict], context_note: str, show_context: bool) -> str:
+    sources = format_source_list(hits)
+    output = [
+        "Local retrieval only: no valid LLM API key is configured.",
+        f"Retrieval note: {context_note}.",
+        "",
+        "Most relevant sources:",
+        sources or "- None",
+        "",
+        "What to do next:",
+        "- Add a real API key in .repo-ai/config.json for a generated answer.",
+        "- Use `explain <file>` when you want a precise explanation of one file.",
+        "- Use `ask --show-context` to print the retrieved code snippets.",
+    ]
+    if show_context:
+        context = "\n\n---\n\n".join(format_snippet(hit) for hit in hits)
+        output.extend(["", "Retrieved context:", context])
+    return "\n".join(output)
+
+
 def init_repo(root: Path) -> str:
     index = indexer.build_index(root)
     output = indexer.save_index(root, index)
@@ -22,7 +58,7 @@ def init_repo(root: Path) -> str:
     )
 
 
-def ask(root: Path, question: str, top_k: int = 5) -> str:
+def ask(root: Path, question: str, top_k: int = 5, show_context: bool = False) -> str:
     index = indexer.load_index(root)
     expanded_question = indexer.expand_query(question)
     hits = indexer.search(index, expanded_question, top_k=top_k)
@@ -47,13 +83,9 @@ def ask(root: Path, question: str, top_k: int = 5) -> str:
         try:
             return llm.complete(system, user, root=root)
         except llm.LlmUnavailable as exc:
-            return f"LLM unavailable: {exc}\n\nLocal context:\n{context}"
+            return f"LLM unavailable: {exc}\n\n" + local_answer_summary(hits, context_note, show_context)
 
-    return (
-        "Local retrieval result. Set REPO_AI_API_KEY or OPENAI_API_KEY for a generated answer.\n"
-        f"Retrieval note: {context_note}.\n\n"
-        + context
-    )
+    return local_answer_summary(hits, context_note, show_context)
 
 
 def explain(root: Path, file_path: str) -> str:
