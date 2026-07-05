@@ -33,6 +33,11 @@ def build_parser() -> argparse.ArgumentParser:
     commit_parser = subparsers.add_parser("commit", help="Generate a Conventional Commit message from git diff.")
     commit_parser.add_argument("--staged", action="store_true", help="Use staged changes instead of unstaged changes.")
 
+    subparsers.add_parser("map", help="Print a repository structure and symbol map.")
+
+    impact_parser = subparsers.add_parser("impact", help="Analyze the likely impact of the current git diff.")
+    impact_parser.add_argument("--staged", action="store_true", help="Analyze staged changes instead of unstaged changes.")
+
     return parser
 
 
@@ -52,6 +57,10 @@ def main(argv: list[str] | None = None) -> int:
             output = commands.review(root, staged=args.staged)
         elif args.command == "commit":
             output = commands.commit_message(root, staged=args.staged)
+        elif args.command == "map":
+            output = commands.repo_map(root)
+        elif args.command == "impact":
+            output = commands.impact(root, staged=args.staged)
         else:
             parser.error(f"Unknown command: {args.command}")
             return 2

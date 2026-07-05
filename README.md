@@ -7,8 +7,11 @@ The project is intentionally compact enough for a resume project, while still sh
 - local repository indexing
 - retrieval-augmented generation over source code
 - cited answers with file and line ranges
+- symbol-level indexing for classes, functions, methods, and imports
 - Chinese query expansion and project overview fallback
 - concise local retrieval output when no API key is configured
+- repository structure mapping
+- Git Diff impact analysis
 - AI-assisted code review over `git diff`
 - Conventional Commit message generation
 - OpenAI-compatible API integration
@@ -88,6 +91,18 @@ Review unstaged changes:
 python -m repo_ai --path C:\path\to\your\repo review
 ```
 
+Map the repository:
+
+```bash
+python -m repo_ai --path C:\path\to\your\repo map
+```
+
+Analyze the impact of unstaged changes:
+
+```bash
+python -m repo_ai --path C:\path\to\your\repo impact
+```
+
 Generate a commit message:
 
 ```bash
@@ -152,6 +167,8 @@ repo-ai init
 repo-ai ask "question"
 repo-ai explain path/to/file
 repo-ai review [--staged]
+repo-ai map
+repo-ai impact [--staged]
 repo-ai commit [--staged]
 ```
 
@@ -175,10 +192,18 @@ python -m repo_ai --path C:\path\to\your\repo ask --show-context "How does authe
 .repo-ai/index.json
 ```
 
+The index includes chunked text plus lightweight symbols. Python symbols are extracted with the standard-library `ast` module, while other text code uses simple regex fallback extraction for imports, classes, and functions.
+
 `repo-ai ask` expands common Chinese project questions into code-oriented keywords, retrieves relevant code chunks with a small BM25-style scorer, and falls back to project overview files when direct retrieval is empty. It then either:
 
 - sends the cited context to the configured model, or
 - prints a concise source list when no API key is configured.
+
+Symbol-oriented questions such as `where is format_snippet used?` are answered from the symbol index and exact identifier references.
+
+`repo-ai map` summarizes indexed files, languages, symbol counts, likely entry points, core files, module groups, and common imports.
+
+`repo-ai impact` reads `git diff`, identifies changed files and touched symbols, looks for downstream references/import dependents in the index, and reports heuristic risk signals.
 
 The overview fallback prioritizes files such as README, build files, application configuration, controllers, services, API clients, and module-level code. This helps broad questions like `这个项目的主要功能是什么？` get useful context even when the exact words do not appear in source code.
 
@@ -191,7 +216,6 @@ The overview fallback prioritizes files such as README, build files, application
 ## Future Extensions
 
 - add MCP server mode with `repo-ai mcp serve`
-- add file/class-name exact recall
 - add tree-sitter symbol extraction
 - add vector embeddings with Chroma, LanceDB, or SQLite-vec
 - add evaluation metrics for retrieval hit rate and answer faithfulness

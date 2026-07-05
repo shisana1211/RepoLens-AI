@@ -10,6 +10,8 @@ def run_git(root: Path, args: list[str]) -> str:
         ["git", *args],
         cwd=root,
         text=True,
+        encoding="utf-8",
+        errors="replace",
         capture_output=True,
         check=False,
     )
@@ -25,7 +27,49 @@ def git_diff(root: Path, staged: bool = False) -> str:
 
 
 def changed_files(diff: str) -> list[str]:
-    return re.findall(r"^\+\+\+ b/(.+)$", diff, flags=re.MULTILINE)
+    files: list[str] = []
+    seen: set[str] = set()
+    for match in re.finditer(r"^diff --git a/(.+?) b/(.+)$", diff, flags=re.MULTILINE):
+        path = match.group(2)
+        if path not in seen:
+            files.append(path)
+            seen.add(path)
+    if files:
+        return files
+
+    for path in re.findall(r"^\+\+\+ b/(.+)$", diff, flags=re.MULTILINE):
+        if path not in seen:
+            files.append(path)
+            seen.add(path)
+    return files
+
+
+def changed_line_numbers(diff: str) -> dict[str, set[int]]:
+    changed: dict[str, set[int]] = {}
+    current_file = ""
+    new_line = 0
+    for line in diff.splitlines():
+        if line.startswith("+++ b/"):
+            current_file = line[6:]
+            changed.setdefault(current_file, set())
+            new_line = 0
+            continue
+        if line.startswith("+++ /dev/null"):
+            current_file = ""
+            new_line = 0
+            continue
+        match = re.match(r"@@ -\d+(?:,\d+)? \+(\d+)(?:,\d+)? @@", line)
+        if match:
+            new_line = int(match.group(1)) - 1
+            continue
+        if not current_file:
+            continue
+        if line.startswith("+") and not line.startswith("+++"):
+            new_line += 1
+            changed[current_file].add(new_line)
+        elif line.startswith(" ") and new_line:
+            new_line += 1
+    return changed
 
 
 def diff_stats(diff: str) -> tuple[int, int]:
@@ -108,4 +152,3 @@ def heuristic_commit_message(diff: str) -> str:
     if files:
         summary = f"update {len(files)} file{'s' if len(files) != 1 else ''}"
     return f"{kind}({scope}): {summary}"
-
